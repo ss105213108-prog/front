@@ -47,4 +47,10 @@
 //     console.log("4三角形")
 // }else{
 //     console.log("不4三角形")
-// }
+// 
+let sum=0;
+for(let i=1; i<=10; i++){
+    sum=sum+i;
+    console.log(sum)
+}
+console.log("最終總和=",sum)

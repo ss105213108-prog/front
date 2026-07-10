@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🔮 幸運大轉盤 - Lucky Wheel</title>
+    <!-- 引入 Tailwind CSS v4 CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script type="module" src="/src/b.ts"></script>
+    <link rel="stylesheet" href="./index.css" />
+    <!-- 引入 Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+    <style>
+      body {
+        font-family: 'Plus Jakarta Sans', 'Noto Sans TC', sans-serif;
+        background: radial-gradient(circle at center, #1e1b4b 0%, #09090b 100%);
+      }
+      .glass-panel {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .neon-glow {
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+      }
+      .neon-border {
+        border-color: rgba(139, 92, 246, 0.5);
+      }
+      .wheel-glow {
+        filter: drop-shadow(0 0 20px rgba(139, 92, 246, 0.25));
+      }
+    </style>
+  </head>
+  <body class="text-slate-100 min-h-screen flex flex-col justify-between py-6 px-4 md:px-8">
+    <!-- Header -->
+    <header class="text-center mb-4">
+      <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent drop-shadow-sm">
+        🔮 幸運大轉盤
+      </h1>
+      <p class="text-sm text-slate-400 mt-1">自訂選項、自訂秒數，轉出你的專屬幸運</p>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-6xl mx-auto flex-grow flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-12 my-2">
+      
+      <!-- Left Column: Controls (Glassmorphism Panel) -->
+      <section class="w-full lg:w-[420px] glass-panel rounded-2xl p-6 shadow-2xl flex flex-col gap-5 order-2 lg:order-1">
+        <!-- Duration Input -->
+        <div>
+          <label for="duration-input" class="block text-sm font-semibold text-slate-300 mb-2">⏱️ 旋轉時間 (秒)</label>
+          <div class="relative flex items-center">
+            <input 
+              type="number" 
+              id="duration-input" 
+              value="5" 
+              min="1" 
+              max="60" 
+              class="w-full bg-slate-900/60 border border-slate-700 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+            />
+            <span class="absolute right-4 text-slate-400 text-sm">秒</span>
+          </div>
+        </div>
+
+        <!-- Add Option Input -->
+        <div>
+          <label for="new-option-input" class="block text-sm font-semibold text-slate-300 mb-2">✨ 新增選項</label>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="new-option-input" 
+              placeholder="例如：吃拉麵" 
+              maxlength="15"
+              class="flex-grow bg-slate-900/60 border border-slate-700 rounded-xl py-3 px-4 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+            />
+            <button 
+              type="button" 
+              id="add-option-btn"
+              class="bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-semibold px-5 rounded-xl transition-all shadow-md active:scale-95"
+            >
+              新增
+            </button>
+          </div>
+        </div>
+
+        <!-- Option List -->
+        <div class="flex-grow flex flex-col min-h-[220px] max-h-[300px]">
+          <h3 class="text-sm font-semibold text-slate-300 mb-2 flex justify-between items-center">
+            <span>📝 選項列表 (<span id="option-count">0</span>)</span>
+            <button id="clear-all-btn" class="text-xs text-rose-400 hover:text-rose-300 transition">全部清除</button>
+          </h3>
+          <!-- Scrollable Options Container -->
+          <div 
+            id="options-list-container" 
+            class="flex-grow overflow-y-auto space-y-2 pr-1 custom-scrollbar border border-slate-800/80 bg-slate-950/40 rounded-xl p-3"
+          >
+            <!-- Generated dynamically -->
+          </div>
+        </div>
+
+        <!-- Action Button -->
+        <button 
+          type="button" 
+          id="spin-btn"
+          class="w-full py-4 bg-gradient-to-r from-violet-500 via-fuchsia-500 to-cyan-500 hover:opacity-95 text-white font-bold text-lg rounded-xl shadow-lg hover:shadow-violet-500/20 transition-all duration-300 transform active:scale-98 neon-glow flex items-center justify-center gap-2"
+        >
+          <span>🚀 開始旋轉</span>
+        </button>
+      </section>
+
+      <!-- Right Column: The Wheel Display -->
+      <section class="flex-grow flex flex-col items-center justify-center order-1 lg:order-2">
+        <div class="relative w-full max-w-[450px] aspect-square flex items-center justify-center">
+          
+          <!-- Outer Wheel Frame / Glow -->
+          <div class="absolute inset-0 rounded-full border border-violet-500/20 bg-slate-900/10 pointer-events-none wheel-glow"></div>
+          
+          <!-- Canvas for Wheel -->
+          <canvas 
+            id="wheel-canvas" 
+            width="800" 
+            height="800" 
+            class="w-full h-full max-w-[450px] max-h-[450px] z-10 transition-transform duration-75"
+          ></canvas>
+
+          <!-- Sleek Center Pointer & Hub -->
+          <div class="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+            <!-- Center Hub Cap -->
+            <div class="w-12 h-12 rounded-full bg-slate-900 border-4 border-violet-400 shadow-xl flex items-center justify-center">
+              <div class="w-3 h-3 rounded-full bg-violet-400 animate-ping absolute"></div>
+              <div class="w-3 h-3 rounded-full bg-violet-400 z-10"></div>
+            </div>
+            <!-- Pointer Arrow (pointing down at the top center of the wheel) -->
+            <!-- We'll place it slightly above the wheel top center -->
+            <div id="wheel-pointer" class="absolute -top-3 w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[28px] border-t-cyan-400 filter drop-shadow-[0_4px_6px_rgba(34,211,238,0.5)] origin-top transition-transform duration-75"></div>
+          </div>
+        </div>
+
+        <!-- Spin Result / Subtitle -->
+        <div id="result-display" class="mt-6 text-center h-16 flex items-center justify-center px-4">
+          <p class="text-slate-400 text-lg font-medium animate-pulse" id="status-text">設定好選項後，點擊按鈕開始旋轉吧！</p>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Modal for Celebrating Winner -->
+    <div id="winner-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center hidden opacity-0 transition-opacity duration-300">
+      <div class="glass-panel w-[90%] max-w-md rounded-3xl p-8 border border-white/10 text-center shadow-2xl relative overflow-hidden transform scale-90 transition-transform duration-300" id="winner-modal-card">
+        <!-- Decorative glowing orb background -->
+        <div class="absolute -top-24 -left-24 w-48 h-48 bg-violet-500/20 rounded-full blur-3xl"></div>
+        <div class="absolute -bottom-24 -right-24 w-48 h-48 bg-cyan-500/20 rounded-full blur-3xl"></div>
+
+        <div class="relative z-10">
+          <div class="text-6xl mb-4 animate-bounce">🎉</div>
+          <h2 class="text-xl text-slate-400 font-semibold mb-2">恭喜獲得</h2>
+          <div 
+            id="winner-name" 
+            class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-violet-400 via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent my-6 px-2 py-1 tracking-wide leading-relaxed word-break"
+          >
+            <!-- Winner name goes here -->
+          </div>
+          <button 
+            type="button" 
+            id="close-modal-btn"
+            class="mt-4 px-8 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold rounded-xl transition duration-200 shadow-lg"
+          >
+            太棒了！
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="text-center text-xs text-slate-500 mt-4 border-t border-slate-900/60 pt-4">
+      🔮 幸運大轉盤 • Built with Vite, TypeScript & Tailwind CSS
+    </footer>
+  </body>
+</html>
